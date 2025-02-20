@@ -75,12 +75,6 @@ ema = ExponentialMovingAverage(model.parameters(), decay=0.999)
 # optimizing
 optimizer = torch.optim.Adam(model.parameters(), lr=opt.learning_rate, betas=(0.9, 0.999))
 
-# scheduler = get_cosine_schedule_with_warmup(
-#     optimizer, 
-#     num_warmup_steps=int(np.floor(opt.epoch_sam_num / opt.batch_size)), 
-#     num_training_steps=int(np.floor(opt.epoch_sam_num / opt.batch_size)) * opt.max_epoch, 
-#     eta_min=1e-6)
-
 
 if opt.scheduler=='MultiStepLR':
     scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=opt.milestones, gamma=opt.gamma)
@@ -106,11 +100,6 @@ if 'L2' == opt.loss:
     criterion = losses.L2().to(device)
 elif 'L1' == opt.loss:
     criterion = losses.CharbonnierLoss().to(device)
-elif 'L1Y' == opt.loss:
-    criterion = losses.CharbonnierLossY().to(device)
-elif 'L1GT' == opt.loss:
-    criterion = losses.CharbonnierLossGT().to(device)
-
 
 lrs = []
 
@@ -123,16 +112,9 @@ def train(epoch, logger):
         gt_batch = shuffle_crop(train_set, opt.batch_size)
         gt = Variable(gt_batch).to(device)
         input_meas = init_meas(gt, Phi_batch_train, opt.input_setting).to(device)
-        if "HQSManba" in opt.method:
+        if "IDCMamba" in opt.method:
             model_out= model(input_meas, input_mask_train)
-        else:
-            model_out,GT_rec= model(input_meas, input_mask_train, gt)
-        if 'L1Y' == opt.loss:
-            loss = criterion(model_out, gt, Phi_batch_train, input_meas)
-        elif 'L1GT' == opt.loss:
-            loss = criterion(model_out, gt, GT_rec)
-        else:
-            loss = criterion(model_out, gt)
+        loss = criterion(model_out, gt)
         loss.backward()
         if opt.clip_grad:
             clip_grad_norm_(model.parameters(), max_norm=0.2)
@@ -163,10 +145,8 @@ def test(epoch, logger):
     for k in range(test_gt.shape[0]):
         with torch.no_grad():
             with ema.average_parameters():
-                if "HQSManba" in opt.method:
+                if "IDCMamba" in opt.method:
                     model_out= model(input_meas[k].unsqueeze(0), input_mask_test)
-                else:
-                    model_out,GT_rec= model(input_meas[k].unsqueeze(0), input_mask_test)   
                 pred.append(model_out)
 
         psnr_val = torch_psnr(model_out[0, :, :, :], test_gt[k, :, :, :])
