@@ -172,9 +172,9 @@ class Block(nn.Module):
     ):
         super().__init__()
         self.ln_1 = LayerNorm(hidden_dim)
-        self.self_attention_window = CrossMamba(hidden_dim,d_state, d_conv, expand)
+        self.self_attention_corss = CrossMamba(hidden_dim,d_state, d_conv, expand)
         self.ln_2 = LayerNorm(hidden_dim)
-        self.self_attention_corss = WindowMamba(hidden_dim, window_size,d_state, d_conv, expand)
+        self.self_attention_window = WindowMamba(hidden_dim, window_size,d_state, d_conv, expand)
         self.ln_3 = LayerNorm(hidden_dim)
         self.ffn = GatedFeedForward(hidden_dim)
 
@@ -183,8 +183,8 @@ class Block(nn.Module):
     def forward(self, x):
         # input [B C H W]
         # x [B C H W]
-        x = x + self.self_attention_window(self.ln_1(x))
-        x = x + self.self_attention_corss(self.ln_2(x))
+        x = x + self.self_attention_corss(self.ln_1(x))
+        x = x + self.self_attention_window(self.ln_2(x))
         x = x + self.ffn(self.ln_3(x))
         return x
     
