@@ -36,9 +36,9 @@ This repository contains the official PyTorch implementation of our paper:
 ### Installation
 
 # Create and activate conda environment
---conda create -n IDC-Mamba python=3.8
---conda activate IDC-Mamba
+- conda create -n IDC-Mamba python=3.8
+- conda activate IDC-Mamba
 
 # Install dependencies
---pip install -r requirements.txt
+- pip install -r requirements.txt
 
